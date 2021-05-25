@@ -1,0 +1,37 @@
+version: "3"
+
+services:
+  db_mysql:
+    image: mysql:8.0.25
+    volumes:
+      - dbdata:/var/lib/mysql
+    restart: always
+    ports:
+      - 33066:3306
+    environment: 
+      MYSQL_DATABASE: 'lol'
+      MYSQL_USER: 'zyrian'
+      MYSQL_ROOT_PASSWORD: '4869'
+  
+  django_app:
+    build: .
+    volumes:
+      - /static:/code/static
+      - .:/code
+    depends_on:
+      - db_mysql
+    
+  nginx:
+    image: nginx:1.18
+    ports:
+      - 8000:80
+    volumes:
+      - /config/nginx/conf.d:/etc/nginx/conf.d
+      - static:/code/static
+    depends_on:
+      - django_app
+
+volumes:
+  .:
+  dbdata:
+  static:
