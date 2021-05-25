@@ -1,37 +1,37 @@
-version: "3"
-
+version: '3.8'
 services:
-  db_mysql:
-    image: mysql:8.0.25
+  web:
+    container_name: web
+    build: ./docker/nginx
+    ports:
+      - 8888:80
     volumes:
-      - dbdata:/var/lib/mysql
-    restart: always
+      - ./app:/var/www/html
+    working_dir: /etc/nginx
+    links:
+      - python
+  python:
+    container_name: python
+    build: ./docker/python
+    volumes:
+      - ./app:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+  mysql:
+    build: docker/mysql
+    container_name: mysql
     ports:
       - 33066:3306
-    environment: 
-      MYSQL_DATABASE: 'lol'
-      MYSQL_USER: 'zyrian'
-      MYSQL_ROOT_PASSWORD: '4869'
-  
-  django_app:
-    build: .
     volumes:
-      - /static:/code/static
-      - .:/code
-    depends_on:
-      - db_mysql
-    
-  nginx:
-    image: nginx:1.18
-    ports:
-      - 8000:80
-    volumes:
-      - /config/nginx/conf.d:/etc/nginx/conf.d
-      - static:/code/static
-    depends_on:
-      - django_app
+      - data-volume:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD='4869'
+      - MYSQL_USER='zyrian'
+      - MYSQL_DATABASE='lol'
+    healthcheck:
+      test: "exit 0"
 
 volumes:
-  .:
-  dbdata:
-  static:
+  data-volume:
